@@ -2,19 +2,27 @@ const jwt=require('jsonwebtoken');
 const Users = require('../model/users');
 const { request } = require('express');
 const bcrypt = require('bcryptjs');
-const secret="97f7fe51log-9abf-4550-9ba7-35563b03a3e7";
+const secret=process.env.JWT_SECRET;
+const {OAuth2Client}=require('google-auth-library');
+const {validationResult}=require('express-validator');
+
 const authController={
     login:async(request,response)=>{
-        console.log('Request Body:', request.body);
+        const errors=validationResult(request);
+        if(!errors.isEmpty()){
+            return response.status(401).json({errors:errors.array()});
+        }
 //these vlues are here beacause of express.json() middleware in the form of javascript object
 try{
     const {username,password}=request.body;
     console.log('Recieved request for username: ',username);
     const data =await Users.findOne({email:username});
+    
     if(!data){
+        
         return response.status(401).json({message:'Invalid Credentials'});
     }
-    const isMatch=bcrypt.compare(password,data.password);
+    const isMatch=await bcrypt.compare(password,data.password);
      
     if(!isMatch){
         return response.status(401).json({message:'Invalid Credentials'});
@@ -26,7 +34,7 @@ try{
         email:data.email
     };
 
-    const token=jwt.sign(userDetails,secret,{expiresIn: '1h'});
+    const token=jwt.sign(userDetails,process.env.JWT_SECRET,{expiresIn: '1h'});
     response.cookie('jwtToken',token,{
         httpOnly:true,   //httpoly means only server can make the changes
         secure:true,
@@ -38,7 +46,7 @@ try{
 }
 catch(error){
     console.log(error);
-    response.tatus(500).json({error:'Internal Server error'});
+    response.status(500).json({error:'Internal Server error'});
 }
 
     },
@@ -79,14 +87,70 @@ catch(error){
                 name:name
             });
             await user.save();
-            console.log('User saved successfully to MongoDB!');
-            response.status(200).json({message:'user registered'});
+            const userDetails={
+                id:user._id,
+                name:user.name,
+                email:user.email
+            };
+            const token = jwt.sign(userDetails,secret, { expiresIn: '1h' });
+            response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: true,
+                 domain: 'localhost',
+                  path: '/'
+                 });
+                 response.json({ message: 'User authenticatted', userDetails: userDetails });
+                       
                     }
         catch(error){
             console.log(error);
             return response.status(500).json({message: 'internal server error'});
         }
-    }
+    },
+    googleAuth:async(request,response)=>{
+        const {idToken}=request.body;
+        if(!idToken){
+            return response.status(400).json({message:'Invalid Request'});
+        }
+        try{
+            const googleClient=new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+            const googleResponse=await googleClient.verifyIdToken({
+                idToken:idToken,
+                audience:process.env.GOOGLE_CLIENT_ID
+            });
+            const payload=googleResponse.getPayload();
+            const {sub:googleId,email,name}=payload;
+            let data=await Users.findOne({email:email});
+            if(!data){
+                data=new Users({
+                    email:email,
+                    name:name,
+                    isGoogleUser:true,
+                    googleId:googleId,
+                });
+                await data.save();
+            }
+            const user={
+                id:data._id?data._id: googleId,
+                username:email,
+                name:name
+            };
+            const token=jwt.sign(user,secret,{expiresIn:'1h'});
+            response.cookie('jwtToken',token,{
+            httpOnly:true,
+            secure:true,
+            domain:'localhost',
+            path:'/'
+
+            });
+            response.json({message:"User authenticated",userDetails:user});
+        }
+        catch(error){
+            console.log(error);
+            return response.status(500).json({error:"Internal server error"});
+        }
+
+    },
 
 };
 module.exports=authController;

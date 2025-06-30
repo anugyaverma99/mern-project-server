@@ -4,6 +4,7 @@ const mongoose=require('mongoose');
 const authRoutes=require('./src/routes/authRoutes');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const linksRoutes=require("./src/routes/linkRoutes");
 
 
 mongoose.connect(process.env.MONGO_URI)
@@ -23,7 +24,7 @@ const corsOptions={
 app.use(cors(corsOptions));
 
 app.use('/auth',authRoutes);
-
+app.use('/links',linksRoutes);
 const PORT=5000;
 app.listen(PORT,(error)=>{
     if(error){
