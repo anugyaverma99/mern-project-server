@@ -7,8 +7,8 @@ const linksController = {
       const link = new Links({
         campaignTitle: campaign_title,
         originalUrl: original_url,
-        category,
-        user: request.user.id,
+        category:category,
+        user: request.user.role==='admin'?request.user.id:request.user.adminId
       });
 
       await link.save();
@@ -24,7 +24,8 @@ const linksController = {
 
   getAll: async (request, response) => {
     try {
-      const links = await Links.find({ user: request.user.id }).sort({ createdAt: -1 });
+      const userId=request.user.role==='admin'?request.user.id:request.user.adminId;
+      const links = await Links.find({ user: userId }).sort({ createdAt: -1 });
       return response.status(200).json({ data: links });
     } catch (error) {
       console.error(error);
@@ -39,8 +40,9 @@ const linksController = {
 
       const link = await Links.findById(linkId);
       if (!link) return response.status(404).json({ error: "Link not found" });
+      const userId=request.user.role==='admin'?request.user.id:request.user.adminId;
 
-      if (link.user.toString() !== request.user.id) {
+      if (link.user.toString() !== userId) {
         return response.status(403).json({ error: "Unauthorized access" });
       }
 
@@ -59,7 +61,9 @@ const linksController = {
       let link = await Links.findById(linkId);
       if (!link) return response.status(404).json({ error: "Link not found" });
 
-      if (link.user.toString() !== request.user.id) {
+      const userId=request.user.role==='admin'?request.user.id:request.user.adminId;
+
+      if (link.user.toString() !==userId) {
         return response.status(403).json({ error: "Unauthorized access" });
       }
 
@@ -90,7 +94,9 @@ const linksController = {
       const link = await Links.findById(linkId);
       if (!link) return response.status(404).json({ error: "Link not found" });
 
-      if (link.user.toString() !== request.user.id) {
+      const userId=request.user.role==='admin'?request.user.id:request.user.adminId;
+
+      if (link.user.toString() !== userId) {
         return response.status(403).json({ error: "Unauthorized access" });
       }
 

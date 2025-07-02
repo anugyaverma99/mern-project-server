@@ -5,7 +5,7 @@ const authRoutes=require('./src/routes/authRoutes');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const linksRoutes=require("./src/routes/linkRoutes");
-
+const userRoutes=require("./src/routes/userRoutes");
 
 mongoose.connect(process.env.MONGO_URI)
 .then(()=>console.log('Database connected'))
@@ -25,6 +25,7 @@ app.use(cors(corsOptions));
 
 app.use('/auth',authRoutes);
 app.use('/links',linksRoutes);
+app.use('/users',userRoutes);
 const PORT=5000;
 app.listen(PORT,(error)=>{
     if(error){

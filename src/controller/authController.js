@@ -31,7 +31,8 @@ try{
     const userDetails={
         id:data._id,
         name:data.name,
-        email:data.email
+        email:data.email,
+        role:data.role?data.role:'admin'
     };
 
     const token=jwt.sign(userDetails,process.env.JWT_SECRET,{expiresIn: '1h'});
@@ -84,13 +85,15 @@ catch(error){
             const user=new Users({
                 email:username,
                 password:encryptedPassword,
-                name:name
+                name:name,
+                role:'admin'
             });
             await user.save();
             const userDetails={
                 id:user._id,
                 name:user.name,
-                email:user.email
+                email:user.email,
+                role:'admin'
             };
             const token = jwt.sign(userDetails,secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
@@ -127,13 +130,15 @@ catch(error){
                     name:name,
                     isGoogleUser:true,
                     googleId:googleId,
+                    role:'admin'
                 });
                 await data.save();
             }
             const user={
                 id:data._id?data._id: googleId,
                 username:email,
-                name:name
+                name:name,
+                role:data.role?data.role:'admin'
             };
             const token=jwt.sign(user,secret,{expiresIn:'1h'});
             response.cookie('jwtToken',token,{
