@@ -2,11 +2,13 @@ const express=require('express');
 const router=express.Router();
 const authMiddleware=require('../middleware/authMidlleware');
 const linksController=require('../controller/linksController');
-const authorize = require('../middleware/authorizeMiddleware'); // ✅ Add this
+const authorize = require('../middleware/authorizeMiddleware'); //  Add this
 
 router.get('/r/:id',linksController.redirect);
 router.use(authMiddleware.protect);
 
+
+router.get('/analytics',authorize('link:read'),linksController.analytics); // this must be above get:/id rout to avoid getting case where 
 router.post('/',authorize('link:create'),linksController.create);
 router.get('/',authorize('link:read'),linksController.getAll);
 router.get('/:id',authorize('link:read'),linksController.getById);

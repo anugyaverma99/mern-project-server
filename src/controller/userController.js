@@ -76,6 +76,8 @@ const userController = {
 
             if (name) user.name = name;
             if (role) user.role = role;
+            
+            console.log(user);
 
             await user.save();
             response.json(user);

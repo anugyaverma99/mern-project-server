@@ -7,6 +7,7 @@ const permissions={
         'link:create',
         'link:delete',
         'link:read',
+        'payment:create'
     ],
     developer:[
         'link : read'
